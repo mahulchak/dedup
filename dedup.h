@@ -26,17 +26,18 @@ struct mI {
         int y2;//query end
         char c;//qualifier. special comments or information can be added to this:i=inversion;
 	vector<int> mv;        
+	int l;//length of the MUM
         bool operator < (const mI& mum1) const
         {
-                return(x1 < mum1.x1) || ((x1 == mum1.x1) && (x2 < mum1.x2));
-                //return(x2 < mum1.x2) || ((x2 == mum1.x2) && (x1 < mum1.x1));
+//sort the mums by ref chrom name and then by start cords of refs 
+                return (rn < mum1.rn)|| ((rn == mum1.rn) && (x1 < mum1.x1)) || ((rn == mum1.rn) && (x1 == mum1.x1) && (x2 < mum1.x2));
         }
         bool operator == (const mI& mum1) const
         {
-                return x1 == mum1.x1 && x2 == mum1.x2 && y1 == mum1.y1 && y2 == mum1.y2;
+                return x1 == mum1.x1 && x2 == mum1.x2 && y1 == mum1.y1 && y2 == mum1.y2 && rn == mum1.rn && qn == mum1.qn;
         }
         };
-//to store coordinates at base pair level
+
 struct qord {
 	string name;
 	int cord;
@@ -50,30 +51,39 @@ class chromPair {
 	public:
 	vector<mI> mums;	
 	vector<mI> cm; //conserved mems
-	vector<mI> cmr; //conserved reverse
 	vector<mI> ncm; //conserved mems from reverse side
-	vector<mI> ncmr;//non-conserved reverse
-	vector<mI> gap; //gaps are represented as mums
-	vector<mI> cc; //cnv candidates
-//	vector<mI> in;//stores insertion mums in reference
-//	vector<mI> del; //stores deletion mums in query
+	vector<mI> gap;
+	vector<mI> last;
 };
 
 bool qusort(mI mi1, mI mi2); //to sort the mI based on query coordinates
 vector<int> makeChromBucket(int refLen);
 bool msort(mI mi1, mI mi2);
-bool isort(mI m1, mI m2);
-bool iqsort(mI m1, mI m2);
-bool dsort(mI m1,mI m2);
+bool lsort(mI m1,mI m2);
 void storeCords(vector<int> & masterRef,vector<int> & masterQ, mI & mi);
 void storeCords(vector<int> & masterQ, mI & mi);//overloaded
-int findDist(int & x1, int & y1, int & c);//distance between the diagonal and the other MUMs
+void storeNameCount(vector<int> & chromDensityRef,vector<int> & chromDensityQ,map<string,int> & lookUpRef,map<string,int> & lookUpQ, mI & mi);
+void storeCords(map<int,vector<qord> > & mRef, mI & mi, ofstream & fout); //overloaded
+void storeCordsCm(map<int,vector<qord>> & mRef, mI & mi);
+mI findClosest(mI & mi, vector<mI> & mums);//overloaded function
 vector<double> getCoverage(mI & mi, vector<int> & masterRef,vector<int> & masterQ);
 vector<double> getCoverage(mI & mi, vector<int> & masterRef,vector<int> & masterQ,float p);
-//void splitByCoverage(chromPair & cp,vector<int> & chrom, vector<mI> & mums,vector<int> & masterRef, vector<int> & masterQ);
+vector<double> getChromCount(mI & mi, vector<int> & chromDensityRef, vector<int> & chromDensityQ);
+void gapCloser(mI & mi, vector<mI> ncm, vector<mI>& cm);
+mI returnMumByQ1(int & y1,vector<mI> & mums);
+mI returnMumByQ2(int & y1,vector<mI> & mums);
+void gapCloserRev(mI & mi, vector<mI> ncm, vector<mI> & cm);
 int nearestInt(double d);
-mI findDup(mI & mi1, mI & mi2);
+void annotGaps(vector<mI> & cm,vector<int> & masterRef, vector<int> & masterQ,vector<int> & chromDensityRef, vector<int> & chromDensityQ,vector<mI> & cnv,map<int,vector<qord> > & umRef, string & refseq, string & qseq,vector<int> & seqlen,ofstream & fout, ofstream & fsmall,int & id);
+void readUniq(ifstream & fin,vector<mI> & cm, map<int,vector<qord> > & umRef,vector<int> & masterHQ);
+void callSmall(mI & mi,map<int,vector<qord> > & umRef, string & refseq, string & qseq,vector<int> & seqlen,ofstream & fsmall);
+void findCnvOverlap(mI & gapmi,vector<mI> ncm, vector<mI> & cnv, vector<mI> & indels,vector<int> & masterRef, vector<int> & masterQ,vector<int> & chromDensityRef,vector<int> & chromDensityQ,ofstream & fout, int & id);
+mI findDupRef(mI & mi1, mI & mi2);
+mI findDupQ(mI & m1, mI & m2);
 char comp(char & N);
-bool findInnie(vector<mI> & mums,mI mi);
-bool findInnieQ(vector<mI> & mums,mI mi);
+void findInnie(vector<mI> & mums,mI & mi);
+void findInnieLast(vector<mI> & mums,mI & mi);
+mI readLast(string str);
+bool chkIndel(mI & gapmi,vector <mI> & indels);
+int findTrans(vector<mI> & mums, mI & m);
 #endif
